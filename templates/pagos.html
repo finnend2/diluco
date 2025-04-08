@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pago - Diluco</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .card-error {
+            display: none;
+            color: #e53e3e;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+        .input-error {
+            border-color: #e53e3e;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 to-purple-50 flex justify-center items-center h-screen">
+    <div class="container mx-auto p-5">
+        <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden flex flex-col md:flex-row">
+            <!-- Sección Izquierda -->
+            <div class="bg-indigo-600 text-white p-8 md:w-1/3 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-2xl font-semibold">Diluco</h2>
+                    <p class="text-sm opacity-80">Veniladores numero 1 en Chile</p>
+                </div>
+                <img src="https://images.unsplash.com/photo-1573497620053-ea5300f94f21?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Terapia online" class="rounded-lg mt-6">
+                <blockquote class="mt-6 text-sm italic">
+                    "Climaizacion a la palma de u mano."
+                    <span class="block text-xs mt-1 opacity-80">— Diluco Chile</span>
+                </blockquote>
+            </div>
+
+            <!-- Sección Derecha -->
+            <div class="p-8 md:w-2/3">
+                <h2 class="text-2xl font-semibold mb-6">Detalles del Pago</h2>
+                <div class="space-y-4 mb-6">
+                    <p class="flex justify-between border-b pb-2">
+                        Sesión Psicológica <span>$50.420</span>
+                    </p>
+                    <p class="flex justify-between border-b pb-2">
+                        IVA (19%) <span>$9.580</span>
+                    </p>
+                    <p class="flex justify-between font-semibold text-lg text-indigo-600">
+                        Total <span>$60.000</span>
+                    </p>
+                </div>
+
+                <form id="payment-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Nombre en la Tarjeta</label>
+                        <input type="text" id="card-name" placeholder="Nombre completo" class="w-full p-2 border rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Número de Tarjeta</label>
+                        <input type="text" id="card-number" placeholder="1234 5678 9012 3456" class="w-full p-2 border rounded-lg" required>
+                        <div id="card-number-error" class="card-error"></div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="w-1/2">
+                            <label class="block text-sm font-semibold mb-1">Fecha de Expiración</label>
+                            <input type="text" id="card-expiry" placeholder="MM/AA" class="w-full p-2 border rounded-lg" required>
+                            <div id="card-expiry-error" class="card-error"></div>
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-sm font-semibold mb-1">Código de Seguridad</label>
+                            <input type="text" id="card-cvc" placeholder="CVC" class="w-full p-2 border rounded-lg" required>
+                            <div id="card-cvc-error" class="card-error"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Correo Electrónico</label>
+                        <input type="email" id="email" placeholder="tucorreo@ejemplo.com" class="w-full p-2 border rounded-lg" required>
+                    </div>
+
+                    <button id="submit-button" type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
+                        Pagar $60.000
+                    </button>
+                    
+                    <!-- Elementos de Stripe para manejo seguro de datos -->
+                    <div id="payment-element" class="hidden"></div>
+                    <div id="payment-message" class="text-red-500 text-sm hidden"></div>
+                </form>
+
+                <p class="text-center text-xs text-gray-500 mt-4">Pago seguro con encriptación SSL</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Stripe
+        const stripe = Stripe('{{ stripe_public_key }}');
+        let elements;
+        
+        // Formateo y validación de campos
+        document.getElementById('card-number').addEventListener('input', formatCardNumber);
+        document.getElementById('card-expiry').addEventListener('input', formatExpiryDate);
+        document.getElementById('card-cvc').addEventListener('input', formatCVC);
+        
+        // Algoritmo de Luhn para validación de tarjeta
+        function isValidCardNumber(cardNumber) {
+            const cleaned = cardNumber.replace(/\s+/g, '');
+            if (!/^\d+$/.test(cleaned)) return false;
+            
+            let sum = 0;
+            let shouldDouble = false;
+            
+            for (let i = cleaned.length - 1; i >= 0; i--) {
+                let digit = parseInt(cleaned.charAt(i));
+                
+                if (shouldDouble) {
+                    digit *= 2;
+                    if (digit > 9) digit -= 9;
+                }
+                
+                sum += digit;
+                shouldDouble = !shouldDouble;
+            }
+            
+            return (sum % 10) === 0;
+        }
+        
+        // Funciones de formateo
+        function formatCardNumber(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            let formatted = '';
+            
+            for (let i = 0; i < value.length && i < 16; i++) {
+                if (i > 0 && i % 4 === 0) formatted += ' ';
+                formatted += value[i];
+            }
+            
+            e.target.value = formatted;
+            validateCardNumber();
+        }
+        
+        function formatExpiryDate(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value.substring(0, 5);
+            validateExpiryDate();
+        }
+        
+        function formatCVC(e) {
+            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
+            validateCVC();
+        }
+        
+        // Funciones de validación
+        function validateCardNumber() {
+            const input = document.getElementById('card-number');
+            const error = document.getElementById('card-number-error');
+            const value = input.value.replace(/\s+/g, '');
+            
+            if (value.length < 13) {
+                showError(input, error, 'El número de tarjeta es demasiado corto');
+                return false;
+            }
+            
+            if (!isValidCardNumber(value)) {
+                showError(input, error, 'Número de tarjeta inválido');
+                return false;
+            }
+            
+            clearError(input, error);
+            return true;
+        }
+        
+        function validateExpiryDate() {
+            const input = document.getElementById('card-expiry');
+            const error = document.getElementById('card-expiry-error');
+            const [month, year] = input.value.split('/');
+            
+            if (!month || !year || month.length !== 2 || year.length !== 2) {
+                showError(input, error, 'Formato inválido (MM/AA)');
+                return false;
+            }
+            
+            const now = new Date();
+            const currentYear = now.getFullYear() % 100;
+            const currentMonth = now.getMonth() + 1;
+            
+            const expiryMonth = parseInt(month);
+            const expiryYear = parseInt(year);
+            
+            if (expiryMonth < 1 || expiryMonth > 12) {
+                showError(input, error, 'Mes inválido');
+                return false;
+            }
+            
+            if (expiryYear < currentYear || (expiryYear === currentYear && expiryMonth < currentMonth)) {
+                showError(input, error, 'La tarjeta ha expirado');
+                return false;
+            }
+            
+            clearError(input, error);
+            return true;
+        }
+        
+        function validateCVC() {
+            const input = document.getElementById('card-cvc');
+            const error = document.getElementById('card-cvc-error');
+            
+            if (input.value.length < 3) {
+                showError(input, error, 'El CVC debe tener al menos 3 dígitos');
+                return false;
+            }
+            
+            clearError(input, error);
+            return true;
+        }
+        
+        function validateEmail() {
+            const input = document.getElementById('email');
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            
+            if (!re.test(input.value)) {
+                input.classList.add('input-error');
+                return false;
+            }
+            
+            input.classList.remove('input-error');
+            return true;
+        }
+        
+        function showError(input, errorElement, message) {
+            input.classList.add('input-error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+        
+        function clearError(input, errorElement) {
+            input.classList.remove('input-error');
+            errorElement.style.display = 'none';
+        }
+        
+        // Manejo del formulario
+        document.getElementById('payment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Validar todos los campos
+            const isCardValid = validateCardNumber();
+            const isExpiryValid = validateExpiryDate();
+            const isCvcValid = validateCVC();
+            const isEmailValid = validateEmail();
+            
+            if (!isCardValid || !isExpiryValid || !isCvcValid || !isEmailValid) {
+                return;
+            }
+            
+            // Deshabilitar el botón de enviar
+            const submitButton = document.getElementById('submit-button');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Procesando...';
+            
+            try {
+                // Crear PaymentIntent en el servidor
+                const response = await fetch('/procesar_pago', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        card_name: document.getElementById('card-name').value,
+                        email: document.getElementById('email').value,
+                        amount: 60000 // $60.000 en centavos
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Redirigir a la página de confirmación
+                window.location.href = `/confirmacion?client_secret=${data.client_secret}`;
+                
+            } catch (error) {
+                const messageElement = document.getElementById('payment-message');
+                messageElement.textContent = error.message;
+                messageElement.classList.remove('hidden');
+                submitButton.disabled = false;
+                submitButton.textContent = 'Pagar $60.000';
+            }
+        });
+    </script>
+</body>
+</html>

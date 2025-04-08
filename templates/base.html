@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}DILUCO{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { font-weight: 300; color: #1a202c; }
+    .aspect-4\/3 { aspect-ratio: 4/3; }
+    .cart-count {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      font-size: 12px;
+      background-color: #e53e3e;
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cart-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      width: 320px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+      z-index: 50;
+    }
+    .cart-dropdown.active { display: block; }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-white">
+
+
+  
+
+  <!-- Navegación -->
+  <nav class="fixed w-full bg-white z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-20">
+        <!-- Logo e Identidad -->
+        <div class="flex-shrink-0">
+          <h1 class="text-3xl font-light tracking-widest">
+            <a href="{{ url_for('index') }}">DILUCO</a>
+          </h1>
+        </div>
+        <!-- Íconos y enlaces -->
+        <div class="flex items-center space-x-6">
+          <!-- Ícono del carrito -->
+          <a href="{{ url_for('checkout') }}" class="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <span class="cart-count" id="cartCount">
+              {{ session.cart|length if session.cart is defined else 0 }}
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+  
+  <!-- Contenido principal -->
+  <main class="pt-20">
+    {% block content %}{% endblock %}
+  </main>
+  
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white py-8 text-center mt-8">
+    <p class="text-sm">&copy; 2025 Diluco Design.</p>
+  </footer>
+  
+  {% block scripts %}{% endblock %}
+</body>
+</html>

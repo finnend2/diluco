@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Gracias - HEIMAT{% endblock %}
+
+{% block content %}
+<main class="pt-20 pb-8">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h2 class="text-3xl font-light tracking-wider mb-8">¡Gracias por tu compra!</h2>
+    <p class="text-lg mb-6">Tu orden se ha procesado exitosamente.</p>
+    <a href="{{ url_for('download_invoice', orden_id=orden_id) }}" class="inline-block bg-gray-900 text-white py-2 px-4 hover:bg-gray-800 transition rounded-full mb-4">
+      Descargar Factura (PDF)
+    </a>
+    <br>
+    <a href="{{ url_for('index') }}" class="inline-block bg-gray-500 text-white py-2 px-4 hover:bg-gray-600 transition rounded-full">
+      Volver a la Tienda
+    </a>
+  </div>
+</main>
+{% endblock %}

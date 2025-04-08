@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - HEIMAT{% endblock %}
+
+{% block content %}
+<main class="pt-20 pb-8">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <h2 class="text-3xl font-light tracking-wider mb-8">Checkout</h2>
+    <!-- Resumen del carrito -->
+    <div class="bg-white shadow rounded-lg p-6 mb-8">
+      <h3 class="text-xl font-light mb-6">Tu Carrito</h3>
+      {% for item in cart %}
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center space-x-4">
+          <img src="{{ item.image }}" alt="{{ item.name }}" class="w-16 h-16 object-cover rounded">
+          <div>
+            <h4 class="font-light">{{ item.name }}</h4>
+            <p class="text-sm text-gray-500">${{ "%.2f"|format(item.price) }}</p>
+            <p class="text-sm text-gray-500">Cantidad: {{ item.quantity }}</p>
+          </div>
+        </div>
+        <p class="text-lg font-medium">${{ "%.2f"|format(item.price * item.quantity) }}</p>
+      </div>
+      {% endfor %}
+      <div class="border-t border-gray-200 pt-4">
+        <div class="flex justify-between">
+          <span class="text-lg">Total:</span>
+          <span class="text-lg font-medium">${{ "%.2f"|format(total) }}</span>
+        </div>
+      </div>
+    </div>
+    <!-- Formulario de Checkout -->
+    <div class="bg-white shadow rounded-lg p-6">
+      <h3 class="text-xl font-light mb-6">Información del Cliente y Pago</h3>
+      <form action="{{ url_for('process_checkout') }}" method="POST">
+        <div class="mb-4">
+          <label style = "display: none;" for="run" class="block text-sm font-medium text-gray-700">RUN</label>
+          <input type="text" id="run" name="run" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+        </div>
+        <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+            <input type="text" id="nombre" name="nombre" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+          </div>
+          <div>
+            <label for="apellido" class="block text-sm font-medium text-gray-700">Apellido</label>
+            <input type="text" id="apellido" name="apellido" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+          </div>
+        </div>
+        <div class="mb-4">
+          <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+          <input type="email" id="email" name="email" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+        </div>
+        <div class="mb-4">
+          <label for="direccion" class="block text-sm font-medium text-gray-700">Dirección</label>
+          <input type="text" id="direccion" name="direccion" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+        </div>
+        <div class="mb-4">
+          <label for="telefono" class="block text-sm font-medium text-gray-700">Teléfono</label>
+          <input type="text" id="telefono" name="telefono" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+        </div>
+        <div class="mb-4">
+          <label for="card" class="block text-sm font-medium text-gray-700">Número de Tarjeta</label>
+          <input type="text" id="card" name="card" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2">
+        </div>
+        <button type="submit" class="w-full bg-gray-900 text-white py-2 px-4 hover:bg-gray-800 transition rounded-full">
+          Completar Compra
+        </button>
+      </form>
+    </div>
+
+    <!-- Mercado Pago button -->
+    <div id="wallet_container" class="mt-8"></div>
+
+  </div>
+</main>
+
+<!-- Mercado Pago Script -->
+<script src="https://sdk.mercadopago.com/js/v2"></script>
+<script>
+  const mp = new MercadoPago("APP_USR-6584253089217049-122016-99124971491d319648c3ab7e103ccef2-1461375858", {
+    locale: "es-CL"
+  });
+
+  mp.checkout({
+    preference: {
+      id: "{{ preference_id }}"
+    },
+    render: {
+      container: "#wallet_container",
+      label: "Pagar con Mercado Pago"
+    }
+  });
+</script>
+{% endblock %}
