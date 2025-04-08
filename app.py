@@ -12,8 +12,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Set Stripe API keys from environment variables
-stripe.api_key = os.getenv('STRIPE_SECRET_KEY', 'sk_test_51R8YJjR1pVzMxLp1xW12cSL2So6x9pAawOgoH8qq4bpbnWDiggLmw8f8kSaZV53FTp4t86NJKEo7TzWYXOsoRO6p004FXHpsJI')
-STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', 'pk_test_51R8YJjR1pVzMxLp1U1puxsgzIGr9MT5Vp7UKZd9Ym2uI95R8z9OcH2YWaLgJpDVozn3tgq9gXoHx4R9Djf0r9MVb00H7simJtR')
+stripe.api_key = os.getenv('STRIPE_SECRET_KEY', '1233131221') ## change for urs
+STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', '1212121') ## change for urs
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dsagasdigasdgsda-212121-uduqg7dgd-7738372823-disudfg')  
