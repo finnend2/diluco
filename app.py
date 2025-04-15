@@ -22,10 +22,12 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dsagasdigasdgsda-212121-uduqg7dg
 db_config = {
     'host': 'localhost',
     'user': 'root',
-    'password': '',
+    'password': '3i2i3232i02i30',
     'database': 'diluco'
 }
 
+
+##ur user and pw
 def get_db_connection():
     return mysql.connector.connect(**db_config)
 
